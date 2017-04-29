@@ -1,5 +1,7 @@
 #!/bin/bash
 FILE='iprecord'
+ZONE='hochfarber.com'
+RECORD_ID='5169408'
 
 if [ -f $FILE ]; then
    PREVIOUS_IP=$(cat $FILE)
@@ -11,7 +13,17 @@ CURRENT_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | tr -d '"')
 
 if [ "$PREVIOUS_IP" != "$CURRENT_IP" ]	
 then
-	echo "LA IP CAMBIO"
+	echo "New IP Detected. Updating DNSimple IP records to $CURRENT_IP"
+	PAYLOAD='{"content" : "'"$CURRENT_IP"'"}'
+	DATAFILE=$(mktemp -t DATA.XXX)
+	CODE=$(curl -s -w "%{http_code}" -o $DATAFILE -H "Authorization: Bearer $DNSIMPLE_ACCOUNT_TOKEN" -H 'Accept: application/json' -H 'Content-Type: application/json' -X PATCH --data "$PAYLOAD"  https://api.dnsimple.com/v2/51926/zones/$ZONE/records/$RECORD_ID )
+	if [ $CODE -eq 200 ]
+	then
+		echo "Success"
+	else		
+		REASON=$(cat "$DATAFILE")
+		echo "Error Updating DNSimple IP records to $CURRENT_IP: $REASON"
+	fi
 fi
 
-#echo $CURRENT_IP > $FILE
+echo $CURRENT_IP > $FILE

@@ -1,0 +1,17 @@
+#!/bin/bash
+FILE='iprecord'
+
+if [ -f $FILE ]; then
+   PREVIOUS_IP=$(cat $FILE)
+else
+   touch $FILE
+   PREVIOUS_IP='nuke'
+fi
+CURRENT_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com | tr -d '"')
+
+if [ "$PREVIOUS_IP" != "$CURRENT_IP" ]	
+then
+	echo "LA IP CAMBIO"
+fi
+
+#echo $CURRENT_IP > $FILE
